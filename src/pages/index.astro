@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Spanish Bingo</title>
+    <style>
+		body{
+			padding:50px;
+		}
+        .gameboard {
+            background-color: #F4F7F9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 50px;
+            font-family: Arial, sans-serif;
+            flex-direction: column;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 10px;
+        }
+        .card {
+            background-color: #D4F1F4;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            transition: background-color 0.3s ease;
+        }
+        .card:hover {
+            background-color: #78CAD2;
+            cursor: pointer;
+        }
+        #spanishWord {
+            margin-top: 50px;
+            font-size: 36px;
+            color: #333;
+            font-weight: bold;
+        }
+        #winMessage {
+            display: none;
+            margin-top: 50px;
+            font-size: 30px;
+        }
+        #penaltyArea {
+            margin-top: 20px;
+            font-size: 30px;
+        }
+        .prize {
+            font-size: 48px;
+            margin-top: 20px;
+            color: #FFC107;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .emoji {
+            font-size: 48px;
+            margin-top: 10px;
+        }
+		.pregame{
+			display:flex;
+			flex-direction: column;
+			justify-content:center;
+			align-items:center;
+		}
+		button{
+			height: 50px;
+			width: 100px;
+		}
+    </style>
+    <script>
+           let pool = {
+            "I drink": "bebo", "I eat": "como", "I write": "escribo", "I run": "corro", "I read": "leo",
+            "I dance": "bailo", "I sing": "canto", "I am": "soy", "I sleep": "duermo", "I talk": "hablo",
+            "I play": "juego", "I like": "Me gusta", "how do you say": "come se dice", "I think": "pienso", "pool": "piscina",
+            "I jump": "salto", "I see": "veo", "I live": "vivo", "I learn": "aprendo", "I receive": "recibo",
+            "You like": "Te gusta", "I am": "soy", "I don't know": "no sé", "I cook": "cocino", "I have": "tengo",
+            "apple": "manzana", "is": "es", "she helps": "ayuda", "grape": "uva", "strawberry": "fresa",
+            "orange": "naranja", "My name is": "Me llamo", "blueberry": "arándano", "watermelon": "sandía", "pear": "pera",
+            "cherry": "cereza", "meat": "carne", "pineapple": "piña", "and": "y", "sister": "hermana",
+            "hot": "caliente", "bread": "pan", "cold": "frio", "she eats": "come", "you": "tú", 
+            "well": "bien", "bad": "malo", "I": "yo", "she": "ella", "he": "el",
+            "we": "nosotros", "how are you": "como estas", "good night": "buenas noches"
+        };
+
+        let words = {};
+        let emojis = ["🚀", "🦄", "🌈", "🍉", "🎈", "🍕", "🦖 ", "🎃", "💩", "🐯"];
+        let markers = ["✔️"];
+        let currentMarker = markers[0];
+        let currentWord = null;
+        let penalties = 0;
+
+        function setup() {
+            let cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    if (card.innerText === currentWord) {
+                        card.innerText = currentMarker;
+                        checkWin(cards);
+                        setNewWord();
+                    } else {
+                        penalties += 1;
+                        document.getElementById('penaltyArea').innerText += 'X ';
+                        checkPenalties();
+                        setNewWord();
+                    }
+                });
+            });
+            resetBoard(cards);
+        }
+
+        function setNewWord() {
+    let cards = Array.from(document.querySelectorAll('.card'));
+    let availableWords = cards.filter(card => !(markers.includes(card.innerText))).map(card => card.innerText);
+    if (availableWords.length > 0) {
+        let randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+        document.getElementById('spanishWord').innerText = pool[randomWord];
+        currentWord = randomWord;
+    } else {
+        document.getElementById('spanishWord').innerText = '';
+    }
+}
+
+function changeBackgroundColor() {
+    let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+    document.body.style.backgroundColor = randomColor;
+}
+
+document.getElementById('colorChangeButton').addEventListener('click', changeBackgroundColor);
+
+
+        function checkWin(cards) {
+            let matrix = [...Array(5)].map(() => Array(5).fill(false));
+            cards.forEach((card, index) => {
+                matrix[Math.floor(index / 5)][index % 5] = (card.innerText === currentMarker);
+            });
+
+            let win = false;
+            for (let i = 0; i < 5; i++) {
+                if (matrix[i].every(val => val)) win = true;
+                if (matrix.map(row => row[i]).every(val => val)) win = true;
+            }
+            if (matrix.map((row, i) => row[i]).every(val => val)) win = true;
+            if (matrix.map((row, i) => row[4 - i]).every(val => val)) win = true;
+
+            if (win) {
+                currentMarker = emojis[Math.floor(Math.random() * emojis.length)];
+                markers.push(currentMarker);
+                document.getElementById('markers').innerText = 'Your markers: ' + markers.join(' ');
+                let winMessage = document.getElementById('winMessage');
+                winMessage.innerText = `You win! Your new marker is ${currentMarker}`;
+                winMessage.style.display = 'block';
+                document.getElementById('prizeBox').innerHTML = `<div class="prize">${currentMarker}</div>`;
+                setTimeout(() => {
+                    winMessage.style.display = 'none';
+                    penalties = 0;
+                    document.getElementById('penaltyArea').innerText = '';
+                    resetBoard(cards);
+                }, 3000);
+            }
+        }
+
+        function checkPenalties() {
+            if (penalties >= 10) {
+                let cards = document.querySelectorAll('.card');
+                penalties = 0;
+                markers = ["✔️"];
+                currentMarker = markers[0];
+                document.getElementById('penaltyArea').innerText = '';
+                document.getElementById('winMessage').innerText = 'You lost! The game is restarting...';
+                document.getElementById('winMessage').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('winMessage').style.display = 'none';
+                    resetBoard(cards);
+                }, 3000);
+            }
+        }
+
+        function resetBoard(cards) {
+            words = { ...pool };
+            cards.forEach(card => {
+                let index = Math.floor(Math.random() * Object.keys(words).length);
+                let word = Object.keys(words)[index];
+                card.innerText = word;
+                delete words[word];
+            });
+            setNewWord();
+        }
+
+        window.onload = setup;
+    </script>
+</head>
+<body>
+	
+<div class="gameboard">
+	<div class="pregame">
+	<h2>Spanish Bingo</h2>
+	<button id="colorChangeButton">Change Color</button>
+</div>	
+	<div id="spanishWord"></div>
+    <div id="winMessage"></div>
+    <div id="penaltyArea"></div>
+    <div class="grid">
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+        <div class="card"></div>
+    </div>
+    <div id="prizeBox"></div>
+    <div id="markers">Your markers: ✔️</div>
+</div>	
+</body>
+</html>
+
